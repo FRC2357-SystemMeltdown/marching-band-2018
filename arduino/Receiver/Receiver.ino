@@ -1,6 +1,9 @@
 #include <RCSwitch.h>
+#include <Servo.h>
 
 #define PIN_RX 0 // Interrupt #0, which is pin D2
+#define PIN_SERVO_1 11
+#define PIN_SERVO_2 12
 
 #define RX_NONE     0
 #define RX_ACTIVE   B101010
@@ -14,6 +17,8 @@ typedef enum State {
 #define LOOP_DELAY         100
 #define RX_MESSAGE_TIMEOUT 1000
 
+Servo servo1;
+Servo servo2;
 RCSwitch receiver = RCSwitch();
 int command = RX_NONE;
 State currentState = RX_NONE;
@@ -23,6 +28,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Receiver starting up...");
 
+  setupServos();
   setupReceiver();
   Serial.println("Receiver ready!");
 }
@@ -31,6 +37,7 @@ void loop() {
   readReceiver();
   checkTimeout();
   updateStateLED();
+  updateMotors();
   delay(LOOP_DELAY);
 }
 
@@ -53,6 +60,24 @@ void updateStateLED() {
   }
 
   digitalWrite(LED_BUILTIN, value);
+}
+
+void updateMotors() {
+  int value = 90; // TODO: update with real values.
+    
+  switch(currentState) {
+    case launching:
+      value = 140;  // TODO: Update with real values.
+      break;
+    case retracting:
+      value = 40; // TODO: Update with real values.
+      break;
+  }
+
+  Serial.print("Servo: ");
+  Serial.println(value);
+  servo1.write(value);
+  servo2.write(value);
 }
 
 void setCommand(int newCommand) {
@@ -119,6 +144,11 @@ bool isTimedOut() {
   // Check to see if we've received a message recently.
   unsigned long timeDiff = millis() - lastMessageMillis;
   return (timeDiff > RX_MESSAGE_TIMEOUT);
+}
+
+void setupServos() {
+  servo1.attach(PIN_SERVO_1);
+  servo2.attach(PIN_SERVO_2);
 }
 
 void setupReceiver() {
