@@ -10,12 +10,18 @@
 #define RX_LAUNCH   B010101
 #define RX_RETRACT  B001010
 
+#define MOTOR_REVERSE 0
+#define MOTOR_STOPPED 90
+#define MOTOR_FORWARD 180
+
+#define MOTOR_RAMP_FACTOR 0.1
+
+#define LOOP_DELAY         200
+#define RX_MESSAGE_TIMEOUT 1000
+
 typedef enum State {
   disabled, enabled, launching, retracting
 };
-
-#define LOOP_DELAY         100
-#define RX_MESSAGE_TIMEOUT 1000
 
 Servo servo1;
 Servo servo2;
@@ -23,6 +29,7 @@ RCSwitch receiver = RCSwitch();
 int command = RX_NONE;
 State currentState = RX_NONE;
 unsigned long lastMessageMillis = -1;
+int motorValue = MOTOR_STOPPED;
 
 void setup() {
   Serial.begin(9600);
@@ -63,21 +70,30 @@ void updateStateLED() {
 }
 
 void updateMotors() {
-  int value = 90; // TODO: update with real values.
-    
+  int setPoint = MOTOR_STOPPED;
+
   switch(currentState) {
     case launching:
-      value = 140;  // TODO: Update with real values.
+      setPoint = MOTOR_FORWARD;
       break;
     case retracting:
-      value = 40; // TODO: Update with real values.
+      setPoint = MOTOR_REVERSE;
       break;
   }
 
-  Serial.print("Servo: ");
-  Serial.println(value);
-  servo1.write(value);
-  servo2.write(value);
+  if (setPoint == motorValue) {
+    return;
+  }
+
+  int diff = setPoint - motorValue;
+  double adjust = ((double)diff) * MOTOR_RAMP_FACTOR;
+
+  motorValue += (diff > 0 ? ceil(adjust) : floor(adjust));
+
+  Serial.print("motorValue: ");
+  Serial.println(motorValue);
+  servo1.write(motorValue);
+  servo2.write(motorValue);
 }
 
 void setCommand(int newCommand) {
@@ -122,6 +138,7 @@ void setRetract() {
 void readReceiver() {
   // If data is available from the receiver, read it.
   if (receiver.available()) {
+    Serial.write('.');
     int value = receiver.getReceivedValue();
     lastMessageMillis = millis();
     setCommand(value);
