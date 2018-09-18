@@ -15,9 +15,11 @@ RCSwitch transmitter = RCSwitch();
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("Transmitter starting up...");
 
   setupTransmitter();
   setupButtons();
+  Serial.println("Transmitter ready!");
 }
 
 void loop() {
