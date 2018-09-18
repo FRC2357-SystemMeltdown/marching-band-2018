@@ -1,17 +1,17 @@
 #include <RCSwitch.h>
 
-RCSwitch transmitter = RCSwitch();
-
 #define PIN_ENABLE 2
 #define PIN_LAUNCH 3
 #define PIN_RETRACT 4
 #define PIN_TX 10
 
-#define LOOP_DELAY 100
+#define LOOP_DELAY 250
 
 #define TX_ACTIVE   "101010"
 #define TX_LAUNCH   "010101"
 #define TX_RETRACT  "001010"
+
+RCSwitch transmitter = RCSwitch();
 
 void setup() {
   Serial.begin(9600);
